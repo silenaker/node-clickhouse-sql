@@ -1,7 +1,5 @@
 "use strict";
 
-function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
-
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
@@ -19,10 +17,6 @@ function _get(target, property, receiver) { if (typeof Reflect !== "undefined" &
 
 function _superPropBase(object, property) { while (!Object.prototype.hasOwnProperty.call(object, property)) { object = _getPrototypeOf(object); if (object === null) break; } return object; }
 
-function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
-
-function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
-
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); if (superClass) _setPrototypeOf(subClass, superClass); }
 
 function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
@@ -33,11 +27,17 @@ function _possibleConstructorReturn(self, call) { if (call && (_typeof(call) ===
 
 function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
 
-function _isNativeReflectConstruct() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Date.prototype.toString.call(Reflect.construct(Date, [], function () {})); return true; } catch (e) { return false; } }
+function _isNativeReflectConstruct() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {})); return true; } catch (e) { return false; } }
 
 function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
 
+function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
 
 var EQUALS = "=";
 var EQ = EQUALS;
@@ -66,9 +66,43 @@ var Consts = {
   NE: NE
 };
 
-var SQLObject = function SQLObject() {
-  _classCallCheck(this, SQLObject);
-};
+var SQLObject = /*#__PURE__*/function () {
+  function SQLObject() {
+    _classCallCheck(this, SQLObject);
+  }
+
+  _createClass(SQLObject, [{
+    key: "clone",
+    value: function clone() {
+      var cloned = Object.create(Object.getPrototypeOf(this));
+      var descriptors = Object.getOwnPropertyDescriptors(this);
+
+      for (var propName in descriptors) {
+        var descriptor = descriptors[propName];
+
+        if (descriptor.hasOwnProperty("value") && !descriptor.hasOwnProperty("get") && !descriptor.hasOwnProperty("set")) {
+          var propValue = descriptor.value;
+
+          if (Array.isArray(propValue)) {
+            descriptor.value = propValue.slice();
+          } else if (!(propValue instanceof SQLObject) && _typeof(propValue) === "object" && propValue !== null) {
+            descriptor.value = Object.assign({}, propValue);
+          } else if (propValue instanceof SQLObject) {
+            descriptor.value = propValue.clone();
+          } else {
+            descriptor.value = propValue;
+          }
+
+          Object.defineProperty(cloned, propName, descriptor);
+        }
+      }
+
+      return cloned;
+    }
+  }]);
+
+  return SQLObject;
+}();
 
 var Conditions = /*#__PURE__*/function (_SQLObject) {
   _inherits(Conditions, _SQLObject);
@@ -182,7 +216,7 @@ var _Condition3 = /*#__PURE__*/function (_SQLObject2) {
     key: "toString",
     value: function toString() {
       if (this.operator) {
-        return [this.column, this.operator, this.value].join(' ');
+        return [this.column, this.operator, this.value].join(" ");
       } else {
         return this.column;
       }
@@ -233,7 +267,7 @@ var InclusionOperator = /*#__PURE__*/function (_Condition2) {
     value: function toString() {
       return [quoteTerm(this.column), " ", this.operator, " (", Array.isArray(this.value) ? this.value.map(function (val) {
         return quoteVal(val);
-      }).join(',') : this.value, ")"].join('');
+      }).join(",") : this.value, ")"].join("");
     }
   }]);
 
@@ -312,6 +346,44 @@ var GlobalIn = /*#__PURE__*/function (_InclusionOperator4) {
   return GlobalIn;
 }(InclusionOperator);
 
+var Settings = /*#__PURE__*/function (_SQLObject3) {
+  _inherits(Settings, _SQLObject3);
+
+  var _super11 = _createSuper(Settings);
+
+  function Settings() {
+    var _this4;
+
+    var dict = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+
+    _classCallCheck(this, Settings);
+
+    _this4 = _super11.call(this);
+    _this4.dict = {};
+
+    for (var key in dict) {
+      if (dict.hasOwnProperty(key)) {
+        _this4.dict[key] = quoteTerm(dict[key]);
+      }
+    }
+
+    return _this4;
+  }
+
+  _createClass(Settings, [{
+    key: "toString",
+    value: function toString() {
+      var _this5 = this;
+
+      return Object.keys(this.dict).map(function (key) {
+        return key + "=" + _this5.dict[key];
+      }).join();
+    }
+  }]);
+
+  return Settings;
+}(SQLObject);
+
 var Operators = {
   Conjunction: Conjunction,
   Disjunction: Disjunction,
@@ -367,19 +439,19 @@ var commonReplacer = [/[\0\n\r\b\t\\'"\x1a]/g, function (s) {
   }
 }];
 
-var Value = /*#__PURE__*/function (_SQLObject3) {
-  _inherits(Value, _SQLObject3);
+var Value = /*#__PURE__*/function (_SQLObject4) {
+  _inherits(Value, _SQLObject4);
 
-  var _super11 = _createSuper(Value);
+  var _super12 = _createSuper(Value);
 
   function Value(value) {
-    var _this4;
+    var _this6;
 
     _classCallCheck(this, Value);
 
-    _this4 = _super11.call(this);
-    _this4.value = value;
-    return _this4;
+    _this6 = _super12.call(this);
+    _this6.value = value;
+    return _this6;
   }
 
   _createClass(Value, [{
@@ -391,7 +463,7 @@ var Value = /*#__PURE__*/function (_SQLObject3) {
         return "'" + (_this$value = this.value).replace.apply(_this$value, commonReplacer).replace(/'/g, "''") + "'";
       }
 
-      if (typeof this.value === 'undefined') {
+      if (typeof this.value === "undefined") {
         return "''";
       }
 
@@ -401,26 +473,26 @@ var Value = /*#__PURE__*/function (_SQLObject3) {
         }).join();
       }
 
-      return this.value + '';
+      return this.value + "";
     }
   }]);
 
   return Value;
 }(SQLObject);
 
-var Term = /*#__PURE__*/function (_SQLObject4) {
-  _inherits(Term, _SQLObject4);
+var Term = /*#__PURE__*/function (_SQLObject5) {
+  _inherits(Term, _SQLObject5);
 
-  var _super12 = _createSuper(Term);
+  var _super13 = _createSuper(Term);
 
   function Term(term) {
-    var _this5;
+    var _this7;
 
     _classCallCheck(this, Term);
 
-    _this5 = _super12.call(this);
-    _this5.term = term;
-    return _this5;
+    _this7 = _super13.call(this);
+    _this7.term = term;
+    return _this7;
   }
 
   _createClass(Term, [{
@@ -428,13 +500,13 @@ var Term = /*#__PURE__*/function (_SQLObject4) {
     value: function toString() {
       var _this$term;
 
-      var parts = this.term.split('.');
+      var parts = this.term.split(".");
 
       if (parts.length > 1) {
-        return [new Term(parts[0]).toString(), new Term(parts[1]).toString()].join('.');
+        return [new Term(parts[0]).toString(), new Term(parts[1]).toString()].join(".");
       }
 
-      return '`' + (_this$term = this.term).replace.apply(_this$term, commonReplacer).replace(/`/g, '\\`') + '`';
+      return "`" + (_this$term = this.term).replace.apply(_this$term, commonReplacer).replace(/`/g, "\\`") + "`";
     }
   }]);
 
@@ -449,25 +521,25 @@ function quoteTerm(term) {
   return term instanceof SQLObject || Number.isFinite(term) ? term : new Term(term);
 }
 
-var SQLFunction = /*#__PURE__*/function (_SQLObject5) {
-  _inherits(SQLFunction, _SQLObject5);
+var SQLFunction = /*#__PURE__*/function (_SQLObject6) {
+  _inherits(SQLFunction, _SQLObject6);
 
-  var _super13 = _createSuper(SQLFunction);
+  var _super14 = _createSuper(SQLFunction);
 
   function SQLFunction(name) {
-    var _this6;
+    var _this8;
 
     _classCallCheck(this, SQLFunction);
 
-    _this6 = _super13.call(this);
-    _this6.name = name;
+    _this8 = _super14.call(this);
+    _this8.name = name;
 
     for (var _len9 = arguments.length, args = new Array(_len9 > 1 ? _len9 - 1 : 0), _key9 = 1; _key9 < _len9; _key9++) {
       args[_key9 - 1] = arguments[_key9];
     }
 
-    _this6.args = args;
-    return _this6;
+    _this8.args = args;
+    return _this8;
   }
 
   _createClass(SQLFunction, [{
@@ -493,76 +565,76 @@ var _curry_f = function _curry_f(name) {
 };
 
 var AggregateFunctions = {
-  count: _curry_f('count'),
-  any: _curry_f('any'),
-  anyLast: _curry_f('anyLast'),
-  min: _curry_f('min'),
-  max: _curry_f('max'),
-  sum: _curry_f('sum'),
-  avg: _curry_f('avg'),
-  uniq: _curry_f('uniq'),
-  uniqCombined: _curry_f('uniqCombined'),
-  uniqHLL12: _curry_f('uniqHLL12'),
-  uniqExact: _curry_f('uniqExact'),
-  groupArray: _curry_f('groupArray'),
-  groupUniqArray: _curry_f('groupUniqArray')
+  count: _curry_f("count"),
+  any: _curry_f("any"),
+  anyLast: _curry_f("anyLast"),
+  min: _curry_f("min"),
+  max: _curry_f("max"),
+  sum: _curry_f("sum"),
+  avg: _curry_f("avg"),
+  uniq: _curry_f("uniq"),
+  uniqCombined: _curry_f("uniqCombined"),
+  uniqHLL12: _curry_f("uniqHLL12"),
+  uniqExact: _curry_f("uniqExact"),
+  groupArray: _curry_f("groupArray"),
+  groupUniqArray: _curry_f("groupUniqArray")
 };
 var ArithmeticFunctions = {
-  plus: _curry_f('plus'),
-  minus: _curry_f('minus'),
-  multiply: _curry_f('multiply'),
-  divide: _curry_f('divide'),
-  intDiv: _curry_f('intDiv'),
-  intDivOrZero: _curry_f('intDivOrZero'),
-  modulo: _curry_f('modulo'),
-  negate: _curry_f('negate'),
-  abs: _curry_f('abs')
+  plus: _curry_f("plus"),
+  minus: _curry_f("minus"),
+  multiply: _curry_f("multiply"),
+  divide: _curry_f("divide"),
+  intDiv: _curry_f("intDiv"),
+  intDivOrZero: _curry_f("intDivOrZero"),
+  modulo: _curry_f("modulo"),
+  negate: _curry_f("negate"),
+  abs: _curry_f("abs")
 };
 var TimeFunctions = {
-  toYear: _curry_f('toYear'),
-  toMonth: _curry_f('toMonth'),
-  toDayOfMonth: _curry_f('toDayOfMonth'),
-  toDayOfWeek: _curry_f('toDayOfWeek'),
-  toHour: _curry_f('toHour'),
-  toMinute: _curry_f('toMinute'),
-  toTime: _curry_f('toTime'),
-  toDate: _curry_f('toDate'),
-  toDateTime: _curry_f('toDateTime'),
-  toDateTime64: _curry_f('toDateTime64'),
-  toStartOfDay: _curry_f('toStartOfDay'),
-  toStartOfMonth: _curry_f('toStartOfMonth'),
-  toStartOfQuarter: _curry_f('toStartOfQuarter'),
-  toStartOfYear: _curry_f('toStartOfYear'),
-  toStartOfMinute: _curry_f('toStartOfMinute'),
-  toStartOfFiveMinute: _curry_f('toStartOfFiveMinute'),
-  toStartOfHour: _curry_f('toStartOfHour'),
-  now: _curry_f('now'),
-  today: _curry_f('today'),
-  yesterday: _curry_f('yesterday')
+  toYear: _curry_f("toYear"),
+  toMonth: _curry_f("toMonth"),
+  toDayOfMonth: _curry_f("toDayOfMonth"),
+  toDayOfWeek: _curry_f("toDayOfWeek"),
+  toHour: _curry_f("toHour"),
+  toMinute: _curry_f("toMinute"),
+  toTime: _curry_f("toTime"),
+  toDate: _curry_f("toDate"),
+  toDateTime: _curry_f("toDateTime"),
+  toDateTime64: _curry_f("toDateTime64"),
+  toStartOfDay: _curry_f("toStartOfDay"),
+  toStartOfMonth: _curry_f("toStartOfMonth"),
+  toStartOfQuarter: _curry_f("toStartOfQuarter"),
+  toStartOfYear: _curry_f("toStartOfYear"),
+  toStartOfMinute: _curry_f("toStartOfMinute"),
+  toStartOfFiveMinute: _curry_f("toStartOfFiveMinute"),
+  toStartOfHour: _curry_f("toStartOfHour"),
+  now: _curry_f("now"),
+  today: _curry_f("today"),
+  yesterday: _curry_f("yesterday")
 };
 var IPAddrFunctions = {
-  toIPv4: _curry_f('toIPv4'),
-  toIPv6: _curry_f('toIPv6'),
-  IPv4NumToString: _curry_f('IPv4NumToString'),
-  IPv4StringToNum: _curry_f('IPv4StringToNum'),
-  IPv4NumToStringClassC: _curry_f('IPv4NumToStringClassC'),
-  IPv6NumToString: _curry_f('IPv6NumToString'),
-  IPv6StringToNum: _curry_f('IPv6StringToNum')
+  toIPv4: _curry_f("toIPv4"),
+  toIPv6: _curry_f("toIPv6"),
+  IPv4NumToString: _curry_f("IPv4NumToString"),
+  IPv4StringToNum: _curry_f("IPv4StringToNum"),
+  IPv4NumToStringClassC: _curry_f("IPv4NumToStringClassC"),
+  IPv6NumToString: _curry_f("IPv6NumToString"),
+  IPv6StringToNum: _curry_f("IPv6StringToNum")
 };
 
-var Raw = /*#__PURE__*/function (_SQLObject6) {
-  _inherits(Raw, _SQLObject6);
+var Raw = /*#__PURE__*/function (_SQLObject7) {
+  _inherits(Raw, _SQLObject7);
 
-  var _super14 = _createSuper(Raw);
+  var _super15 = _createSuper(Raw);
 
   function Raw(string) {
-    var _this7;
+    var _this9;
 
     _classCallCheck(this, Raw);
 
-    _this7 = _super14.call(this);
-    _this7.raw = string;
-    return _this7;
+    _this9 = _super15.call(this);
+    _this9.raw = string;
+    return _this9;
   }
 
   _createClass(Raw, [{
@@ -575,15 +647,15 @@ var Raw = /*#__PURE__*/function (_SQLObject6) {
   return Raw;
 }(SQLObject);
 
-var Query = /*#__PURE__*/function (_SQLObject7) {
-  _inherits(Query, _SQLObject7);
+var Query = /*#__PURE__*/function (_SQLObject8) {
+  _inherits(Query, _SQLObject8);
 
-  var _super15 = _createSuper(Query);
+  var _super16 = _createSuper(Query);
 
   function Query() {
     _classCallCheck(this, Query);
 
-    return _super15.apply(this, arguments);
+    return _super16.apply(this, arguments);
   }
 
   return Query;
@@ -592,33 +664,35 @@ var Query = /*#__PURE__*/function (_SQLObject7) {
 var Select = /*#__PURE__*/function (_Query) {
   _inherits(Select, _Query);
 
-  var _super16 = _createSuper(Select);
+  var _super17 = _createSuper(Select);
 
   function Select() {
-    var _this8;
+    var _this10;
 
     _classCallCheck(this, Select);
 
-    _this8 = _super16.call(this);
-    _this8.tables = [];
-    _this8.conditions = new Conjunction();
-    _this8.having_conditions = new Conjunction();
-    _this8.preconditions = new Conjunction();
-    _this8.aggregations = [];
-    _this8.select_list = [];
-    _this8.order_expressions = [];
-    _this8.request_totals = undefined;
-    _this8.sampling = undefined;
-    _this8.limits = undefined;
-    _this8.limitbycolumns = undefined;
-    _this8.fmt = undefined;
-    return _this8;
+    _this10 = _super17.call(this);
+    _this10.tables = [];
+    _this10.conditions = new Conjunction();
+    _this10.having_conditions = new Conjunction();
+    _this10.preconditions = new Conjunction();
+    _this10.aggregations = [];
+    _this10.aggregationsModifier = undefined;
+    _this10.select_list = [];
+    _this10.order_expressions = [];
+    _this10.request_totals = undefined;
+    _this10.sampling = undefined;
+    _this10.limits = undefined;
+    _this10.limitbycolumns = undefined;
+    _this10.fmt = undefined;
+    _this10.settings_dict = undefined;
+    return _this10;
   }
 
   _createClass(Select, [{
     key: "select",
     value: function select() {
-      var _this9 = this;
+      var _this11 = this;
 
       for (var _len11 = arguments.length, columns = new Array(_len11), _key11 = 0; _key11 < _len11; _key11++) {
         columns[_key11] = arguments[_key11];
@@ -629,7 +703,7 @@ var Select = /*#__PURE__*/function (_Query) {
       }
 
       columns.forEach(function (col) {
-        return _this9.select_list.push(col);
+        return _this11.select_list.push(col);
       });
       return this;
     }
@@ -657,14 +731,14 @@ var Select = /*#__PURE__*/function (_Query) {
         if (typeof table === "string") return [quoteTerm(table)];
 
         if (Array.isArray(table)) {
-          if (table[0] instanceof Select) table[0] = '(' + table[0].toString() + ')';else table[0] = quoteTerm(table[0]);
+          if (table[0] instanceof Select) table[0] = "(" + table[0].toString() + ")";else table[0] = quoteTerm(table[0]);
           table[1] = quoteTerm(table[1]);
           return table;
         }
 
-        if (table instanceof Select) return ['(' + table.toString() + ')'];
+        if (table instanceof Select) return ["(" + table.toString() + ")"];
         var alias = Object.values(table)[0];
-        if (alias instanceof Select) alias = '(' + alias.toString() + ')';else alias = quoteTerm(alias);
+        if (alias instanceof Select) alias = "(" + alias.toString() + ")";else alias = quoteTerm(alias);
         return [alias, quoteTerm(Object.keys(table)[0])];
       });
       this.tables = tables;
@@ -716,15 +790,38 @@ var Select = /*#__PURE__*/function (_Query) {
   }, {
     key: "groupBy",
     value: function groupBy() {
-      var _this10 = this;
+      var _this12 = this;
 
       for (var _len13 = arguments.length, aggregateExpressions = new Array(_len13), _key13 = 0; _key13 < _len13; _key13++) {
         aggregateExpressions[_key13] = arguments[_key13];
       }
 
       aggregateExpressions.forEach(function (a) {
-        return _this10.aggregations.push(a);
+        return _this12.aggregations.push(a);
       });
+      return this;
+    }
+  }, {
+    key: "groupByModifier",
+    value: function groupByModifier(modifier) {
+      switch (modifier) {
+        case "rollup":
+          this.aggregationsModifier = "with rollup";
+          break;
+
+        case "cube":
+          this.aggregationsModifier = "with cube";
+          break;
+
+        case "total":
+          this.aggregationsModifier = "with total";
+          break;
+
+        case null:
+          this.aggregationsModifier = null;
+          break;
+      }
+
       return this;
     }
   }, {
@@ -759,14 +856,14 @@ var Select = /*#__PURE__*/function (_Query) {
   }, {
     key: "orderBy",
     value: function orderBy() {
-      var _this11 = this;
+      var _this13 = this;
 
       for (var _len15 = arguments.length, expressions = new Array(_len15), _key15 = 0; _key15 < _len15; _key15++) {
         expressions[_key15] = arguments[_key15];
       }
 
       expressions.forEach(function (e) {
-        return _this11.order_expressions.push(e);
+        return _this13.order_expressions.push(e);
       });
       return this;
     }
@@ -785,19 +882,19 @@ var Select = /*#__PURE__*/function (_Query) {
         select_list = "*";
       } else {
         select_list = this.select_list.map(function (c) {
-          return Array.isArray(c) ? quoteTerm(c[0]) + ' as ' + quoteTerm(c[1]) : quoteTerm(c);
+          return Array.isArray(c) ? quoteTerm(c[0]) + " as " + quoteTerm(c[1]) : quoteTerm(c);
         }).join();
       }
 
       var from = this.from().map(function (table) {
-        return table.length === 1 ? table[0] : table[0] + ' as ' + table[1];
+        return table.length === 1 ? table[0] : table[0] + " as " + table[1];
       });
       from = from.length ? "from " + from.join() : "";
       var prewhere = this.preconditions.length ? "prewhere " + this.preconditions : "";
       var where = this.conditions.length ? "where " + this.conditions : "";
       var groupby = this.aggregations.length ? "group by " + this.aggregations.map(function (c) {
         return quoteTerm(c);
-      }).join() : "";
+      }).join() + (this.aggregationsModifier ? " " + this.aggregationsModifier : "") : "";
       var having = this.having_conditions.length ? "having " + this.having_conditions : "";
       var order_by = this.order_expressions.length ? "order by " + this.order_expressions.map(function (e) {
         return Array.isArray(e) ? quoteTerm(e[0]) + " " + e[1] : quoteTerm(e);
@@ -806,13 +903,20 @@ var Select = /*#__PURE__*/function (_Query) {
       var sample = this.sampling ? "sample " + this.sampling : "";
       var limitby = this.limitbycolumns && this.limitbycolumns.columns.length ? "limit " + this.limitbycolumns.limit + " by " + this.limitbycolumns.columns.map(function (c) {
         return quoteTerm(c);
-      }).join() : '';
-      var limit = this.limits ? "limit " + this.limits.number + (typeof this.limits.offset === "undefined" ? "" : "," + this.limits.offset) : '';
-      var format = this.fmt ? " format " + this.fmt.toUpperCase() : "";
-      var parts = ["select", select_list, from, sample, prewhere, where, groupby, with_totals, having, order_by, limitby, limit, format].filter(function (v) {
-        return v != '';
+      }).join() : "";
+      var limit = this.limits ? "limit " + this.limits.number + (typeof this.limits.offset === "undefined" ? "" : "," + this.limits.offset) : "";
+      var format = this.fmt ? "format " + this.fmt.toUpperCase() : "";
+      var settings = this.settings_dict ? "settings " + this.settings_dict : "";
+      var parts = ["select", select_list, from, sample, prewhere, where, groupby, with_totals, having, order_by, limitby, limit, format, settings].filter(function (v) {
+        return v != "";
       });
-      return parts.join(' ');
+      return parts.join(" ");
+    }
+  }, {
+    key: "settings",
+    value: function settings(dict) {
+      this.settings_dict = new Settings(dict);
+      return this;
     }
   }]);
 
@@ -878,7 +982,7 @@ var Shortcuts = {
     return new NotIn(col, null, values);
   },
   cast: function cast(thing, t) {
-    return new SQLFunction('cast', thing, quoteVal(t));
+    return new SQLFunction("cast", thing, quoteVal(t));
   }
 };
 

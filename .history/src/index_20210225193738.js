@@ -28,38 +28,11 @@ const Consts = {
 
 class SQLObject {
   clone() {
-    const cloned = Object.create(Object.getPrototypeOf(this));
-    const descriptors = Object.getOwnPropertyDescriptors(this);
-
-    for (const propName in descriptors) {
-      const descriptor = descriptors[propName];
-
-      if (
-        descriptor.hasOwnProperty("value") &&
-        !descriptor.hasOwnProperty("get") &&
-        !descriptor.hasOwnProperty("set")
-      ) {
-        const propValue = descriptor.value;
-
-        if (Array.isArray(propValue)) {
-          descriptor.value = propValue.slice();
-        } else if (
-          !(propValue instanceof SQLObject) &&
-          typeof propValue === "object" &&
-          propValue !== null
-        ) {
-          descriptor.value = Object.assign({}, propValue);
-        } else if (propValue instanceof SQLObject) {
-          descriptor.value = propValue.clone();
-        } else {
-          descriptor.value = propValue;
-        }
-
-        Object.defineProperty(cloned, propName, descriptor);
-      }
+    if (this.constructor === SQLObject) {
+      return new SQLObject();
+    } else {
+      return this;
     }
-
-    return cloned;
   }
 }
 
@@ -76,6 +49,17 @@ class Conditions extends SQLObject {
   get length() {
     return this.args.length;
   }
+
+  clone() {
+    if (this.constructor === Conditions) {
+      const cloned = new Conditions();
+      super.clone.call(cloned);
+      cloned.args = [...this.args];
+      return cloned;
+    } else {
+      return this;
+    }
+  }
 }
 
 class Disjunction extends Conditions {
@@ -87,6 +71,16 @@ class Disjunction extends Conditions {
     return this.args.length
       ? this.args.map((arg) => "(" + arg + ")").join(" or ")
       : "";
+  }
+
+  clone() {
+    if (this.constructor === Disjunction) {
+      const cloned = new Disjunction();
+      super.clone.call(cloned);
+      return cloned;
+    } else {
+      return this;
+    }
   }
 }
 
@@ -105,6 +99,16 @@ class Conjunction extends Conditions {
       })
       .join(" and ");
   }
+
+  clone() {
+    if (this.constructor === Conjunction) {
+      const cloned = new Conjunction();
+      super.clone.call(cloned);
+      return cloned;
+    } else {
+      return this;
+    }
+  }
 }
 
 class Condition extends SQLObject {
@@ -122,6 +126,20 @@ class Condition extends SQLObject {
       return this.column;
     }
   }
+
+  clone() {
+    if (this.constructor === Condition) {
+      const cloned = new Condition();
+      super.clone.call(cloned);
+      ["column", "operator", "value"].forEach((prop) => {
+        cloned[prop] =
+          this[prop] instanceof SQLObject ? this[prop].clone() : this[prop];
+      });
+      return cloned;
+    } else {
+      return this;
+    }
+  }
 }
 
 class Negation extends Condition {
@@ -131,6 +149,16 @@ class Negation extends Condition {
 
   toString() {
     return "not(" + super.toString() + ")";
+  }
+
+  clone() {
+    if (this.constructor === Negation) {
+      const cloned = new Negation();
+      super.clone.call(cloned);
+      return cloned;
+    } else {
+      return this;
+    }
   }
 }
 
@@ -152,11 +180,35 @@ class InclusionOperator extends Condition {
       ")",
     ].join("");
   }
+
+  clone() {
+    if (this.constructor === InclusionOperator) {
+      const cloned = new InclusionOperator();
+      super.clone.call(cloned);
+      cloned.operator =
+        this.operator instanceof SQLObject
+          ? this.operator.clone()
+          : this.operator;
+      return cloned;
+    } else {
+      return this;
+    }
+  }
 }
 
 class In extends InclusionOperator {
   constructor(...args) {
     super("in", ...args);
+  }
+
+  clone() {
+    if (this.constructor === In) {
+      const cloned = new In();
+      super.clone.call(cloned);
+      return cloned;
+    } else {
+      return this;
+    }
   }
 }
 
@@ -164,17 +216,47 @@ class NotIn extends InclusionOperator {
   constructor(...args) {
     super("not in", ...args);
   }
+
+  clone() {
+    if (this.constructor === NotIn) {
+      const cloned = new NotIn();
+      super.clone.call(cloned);
+      return cloned;
+    } else {
+      return this;
+    }
+  }
 }
 
 class GlobalNotIn extends InclusionOperator {
   constructor(...args) {
     super("global not in", ...args);
   }
+
+  clone() {
+    if (this.constructor === GlobalNotIn) {
+      const cloned = new GlobalNotIn();
+      super.clone.call(cloned);
+      return cloned;
+    } else {
+      return this;
+    }
+  }
 }
 
 class GlobalIn extends InclusionOperator {
   constructor(...args) {
     super("global in", ...args);
+  }
+
+  clone() {
+    if (this.constructor === GlobalIn) {
+      const cloned = new GlobalIn();
+      super.clone.call(cloned);
+      return cloned;
+    } else {
+      return this;
+    }
   }
 }
 
@@ -194,6 +276,17 @@ class Settings extends SQLObject {
     return Object.keys(this.dict)
       .map((key) => key + "=" + this.dict[key])
       .join();
+  }
+
+  clone() {
+    if (this.constructor === Settings) {
+      const cloned = new Settings();
+      super.clone.call(cloned);
+      cloned.dict = Object.assign(cloned.dict, this.dict);
+      return cloned;
+    } else {
+      return this;
+    }
   }
 }
 
@@ -264,6 +357,21 @@ class Value extends SQLObject {
 
     return this.value + "";
   }
+
+  clone() {
+    if (this.constructor === Value) {
+      const cloned = new Value();
+      super.clone.call(cloned);
+      if (Array.isArray(this.value)) {
+        cloned.value = [...this.value];
+      } else {
+        cloned.value = this.value;
+      }
+      return cloned;
+    } else {
+      return this;
+    }
+  }
 }
 
 class Term extends SQLObject {
@@ -284,6 +392,17 @@ class Term extends SQLObject {
     return (
       "`" + this.term.replace(...commonReplacer).replace(/`/g, "\\`") + "`"
     );
+  }
+
+  clone() {
+    if (this.constructor === Term) {
+      const cloned = new Term();
+      super.clone.call(cloned);
+      cloned.term = this.term;
+      return cloned;
+    } else {
+      return this;
+    }
   }
 }
 
@@ -317,6 +436,18 @@ class SQLFunction extends SQLObject {
         .join() +
       ")"
     );
+  }
+
+  clone() {
+    if (this.constructor === SQLFunction) {
+      const cloned = new SQLFunction();
+      super.clone.call(cloned);
+      cloned.name = this.name;
+      cloned.args = [...this.args];
+      return cloned;
+    } else {
+      return this;
+    }
   }
 }
 
@@ -395,9 +526,29 @@ class Raw extends SQLObject {
   toString() {
     return this.raw;
   }
+
+  clone() {
+    if (this.constructor === Raw) {
+      const cloned = new Raw();
+      super.clone.call(cloned);
+      cloned.raw = this.raw;
+      return cloned;
+    } else {
+      return this;
+    }
+  }
 }
 
 class Query extends SQLObject {
+  clone() {
+    if (this.constructor === Query) {
+      const cloned = new Query();
+      super.clone.call(cloned);
+      return cloned;
+    } else {
+      return this;
+    }
+  }
 }
 
 class Select extends Query {
@@ -643,6 +794,47 @@ class Select extends Query {
   settings(dict) {
     this.settings_dict = new Settings(dict);
     return this;
+  }
+
+  clone() {
+    if (this.constructor === Select) {
+      const cloned = new Select();
+      super.clone.call(cloned);
+      [
+        "tables",
+        "conditions",
+        "having_conditions",
+        "preconditions",
+        "aggregations",
+        "aggregationsModifier",
+        "select_list",
+        "order_expressions",
+        "request_totals",
+        "sampling",
+        "limits",
+        "limitbycolumns",
+        "fmt",
+        "settings_dict",
+      ].forEach((prop) => {
+        const propValue = this[prop];
+        if (Array.isArray(propValue)) {
+          cloned[prop] = [...propValue];
+        } else if (
+          !(propValue instanceof SQLObject) &&
+          typeof propValue === "object" &&
+          propValue !== null
+        ) {
+          cloned[prop] = Object.assign(cloned[prop], propValue);
+        } else if (propValue instanceof SQLObject) {
+          cloned[prop] = propValue.clone();
+        } else {
+          cloned[prop] = propValue;
+        }
+      });
+      return cloned;
+    } else {
+      return this;
+    }
   }
 }
 
